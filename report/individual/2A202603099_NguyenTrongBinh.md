@@ -1,6 +1,7 @@
 # Báo cáo Day 13 — Nguyễn Trọng Bình, 2A202603099
 
 ## 1. Kết luận trước
+
 Mã số sinh viên: `2A202603099`, task CVAT: `D13-2A202603099`, gồm 10 frame: `s01f00`, `s01f58`, `s02f09`, `s02f42`, `s03f22`, `s03f48`, `s04f04`, `s04f49`, `s05f17`, `s05f36`. Hệ điều hành: Windows 11, trình duyệt: Google Chrome, môi trường gán nhãn: CVAT local (`localhost:8080`), MSSV bạn đổi kiểm: `2A202603089`. Tổng cộng đã gán `103` cuboid; frame có ít hộp nhất là `s02f42` (`5` cuboid) do khung cảnh thông thoáng, ít phương tiện nằm trong vùng điểm LiDAR đủ rõ để xác định hình khối; công cụ `selfcheck` gắn cờ `24` cuboid trên tổng số `103` cuboid. Phần tôi tin cậy nhất là phân loại (`class`) và vị trí tâm ngang (`x, y`) của các phương tiện trong bán kính `30 m` nhờ đối chiếu đồng thời 7 góc camera; phần còn yếu nhất là căn độ cao đáy (`z_bottom`) ở các vùng mặt đường có độ dốc nhẹ và ước lượng kích thước với các xe ở xa trên `35 m` bị thưa điểm.
 
 Cách dùng CVAT:
@@ -9,19 +10,20 @@ Cách dùng CVAT:
 - Bật mũi tên hướng và xem ảnh camera: tích chọn **Cuboid orientation** trong bảng **Appearance** để hiển thị mũi tên đỏ chỉ hướng đầu xe, đồng thời kiểm tra khung chiếu 2D của cuboid trên cột ảnh camera (`cam01`–`cam09`) bên phải.
 
 ## 2. Đọc frame (Bước 2)
-Ảnh minh họa: `t1-s01f00-3d.png`, `t1-s01f00-top.png`, `t1-s01f58-3d.png`, `t1-s01f58-top.png`.
+
+Hai frame đọc kỹ. Ảnh: `t1-s01f00-3d.png`, `t1-s01f00-top.png`, `t1-s01f58-3d.png`, `t1-s01f58-top.png`.
 
 | Frame | Phía trước xe ở cạnh nào của ảnh nhìn từ trên xuống; +x, +y chỉ về đâu | Mặt đường (phẳng/dốc; thấp hơn LiDAR ~ m) | Vật xa nhất đọc được (~ m) | Loại vật thấy | Vật phía sau / hai bên | Cụm chưa đọc được |
 |---|---|---|---|---|---|---|
 | `s01f00` | Phía trước xe (`-y`) ở cạnh trên của ảnh nhìn từ trên xuống; trục `+x` chỉ sang trái (bên trái xe thu dữ liệu), trục `+y` chỉ xuống dưới (phía sau xe). | Mặt đường phẳng, thấp hơn tâm cảm biến LiDAR khoảng `1,7 m` (`z ≈ -1,7 m`). | Khoảng `50,9 m` (`Truck` #17). | `Car`, `Bus`, `Truck`, `Cyclist`, `Pedestrian`. | Một xe con chạy sát bên trái (`+x`, cách `3,4 m`) và nhiều xe con nối đuôi phía sau (`+y`, cách từ `9,3 m` đến `25,8 m`). | Vùng phía sau xe con sát bên trái bị che khuất hoàn toàn và các cụm điểm nhỏ ở rìa xa trên `50 m`. |
 | `s01f58` | Phía trước xe (`-y`) ở cạnh trên của ảnh nhìn từ trên xuống; trục `+x` chỉ sang trái, trục `+y` chỉ xuống dưới. | Mặt đường tương đối phẳng, thấp hơn tâm cảm biến LiDAR khoảng `1,7 m`. | Khoảng `37,7 m` (`Cyclist` #13). | `Car`, `Cyclist`. | Một xe con chạy sát bên hông ở khoảng cách `3,0 m` cùng các xe phía sau và làn bên cạnh ở cự ly `6,8–16,5 m`. | Một số cụm điểm thưa sát lề đường và các vật thể nhỏ ở xa ngoài `40 m` không đủ mật độ điểm để nhận dạng. |
 
-Ba điều **chỉ camera** cho biết từ hai frame trên:
+Ba điều **chỉ camera** cho biết, lấy từ chính hai frame trên:
 1. Màu sắc, đặc điểm nhận diện bề ngoài và tín hiệu đèn phanh/đèn xi-nhan của các xe xung quanh.
 2. Phân biệt rõ ranh giới giữa người đi bộ (`Pedestrian`) và người điều khiển xe hai bánh (`Cyclist`) ở khoảng cách trung bình trên `20 m` khi cụm điểm LiDAR chỉ còn vài chục điểm.
 3. Nhận diện vạch kẻ đường, dải phân cách và biển báo giao thông để biết làn đường di chuyển của từng phương tiện.
 
-Ba điều **chỉ LiDAR** cho biết từ hai frame trên:
+Ba điều **chỉ LiDAR** cho biết, lấy từ chính hai frame trên:
 1. Tọa độ 3D chính xác và khoảng cách thực tế tính bằng mét (`3,0 m`, `3,4 m`, `50,9 m`) từ cảm biến tới từng vật thể xung quanh.
 2. Chiều cao thực tế của vật thể và độ cao mặt đường so với gốc tọa độ cảm biến (`z ≈ -1,7 m`).
 3. Vùng không gian bị che khuất hoàn toàn phía sau các vật cản gần (bóng che hình quạt không có điểm phản hồi) và góc nhìn toàn cảnh 360° không bị giới hạn bởi góc mở ống kính từng camera.
@@ -40,7 +42,8 @@ Tám frame lướt:
 | `s05f36` | Cạnh trên của ảnh nhìn từ trên xuống (hướng `-y`). | Mặt đường phía trước có độ dốc nhẹ làm tọa độ đáy của một số xe lệch nhẹ so với mức chuẩn `-1,7 m`. |
 
 ## 3. Ba cuboid có hướng dẫn (Bước 3)
-Ảnh minh họa: `t2-a-car.png`, `t2-b-bus-truck.png`, `t2-c-ped-cyclist.png`.
+
+Ảnh: `t2-a-car.png`, `t2-b-bus-truck.png`, `t2-c-ped-cyclist.png`.
 
 | Vật | Frame, idx | Class | Mũi tên yaw đúng hướng? | Đáy chạm đường? | Đã kiểm Top/Side/Front + ảnh? | Kích thước trong bảng 4.3? |
 |---|---|---|---|---|---|---|
@@ -56,6 +59,8 @@ Các vật bỏ qua vì không đủ cơ sở:
 
 ## 4. Bốn hiện tượng chất lượng (Bước 4)
 
+Nguyên nhân ghi là **giả thuyết**.
+
 | Hiện tượng | Frame / tên ảnh / nguồn | Nguyên nhân (giả thuyết) | Thấy gì trên point cloud | Hệ quả khi gán (theo guideline) |
 |---|---|---|---|---|
 | 1. Bóng che | `s01f00` / `t4-1-bong-che.png` / task cá nhân | Giả thuyết: tia laser của LiDAR truyền thẳng nên bị thân xe con chạy sát bên trái (`dist_m = 3,4 m`) chắn toàn bộ chùm tia hướng sang vùng không gian phía sau nó. | Xuất hiện một vùng tối hình quạt kéo dài từ sau thân xe chắn ra rìa trái khung hình, hoàn toàn không có đường vòng quét hay điểm phản hồi. | Không vẽ dự đoán cuboid vào vùng tối không có điểm; chỉ gán các vật thể có điểm phản hồi thực tế ở rìa ngoài vùng che khuất. |
@@ -64,6 +69,8 @@ Các vật bỏ qua vì không đủ cơ sở:
 | 4. Điểm lạ | `s05f17` / `t4-4-diem-la.png` / task cá nhân | Giả thuyết: hiện tượng phản xạ đa đường (multipath) qua bề mặt kính/kim loại bóng hoặc nhiễu bụi mịn trong không khí tạo ra các điểm trả về sai vị trí thực. | Xuất hiện các điểm đơn lẻ lơ lửng phía trên nóc xe hoặc nằm tách biệt trên mặt đường trống không gắn với vật thể nào trên camera. | Bỏ qua các điểm nhiễu lẻ khi kéo kích thước cuboid để tránh làm hộp bị phình cao bất thường, và không gán nhãn cho các cụm điểm nhiễu không có vật thật trên camera. |
 
 ## 5. Số từ cuboid của tôi (Bước 5)
+
+Lấy từ `submission/D13-2A202603099-bangA.csv`; số điểm lấy từ cột `points_in` của `-tukiem.csv`. Mặt đường khoảng −1,7 m: z đáy lệch hơn 0,3 m là lơ lửng hoặc chìm.
 
 | Cuboid (frame, idx, class) | z | h | z đáy = z − h/2 | dist_m | r = √(x²+y²+z²) | yaw_deg | Nhận xét (lơ lửng / chìm / chạm đường) |
 |---|---|---|---|---|---|---|---|
@@ -95,9 +102,10 @@ Tự kiểm và sửa lỗi:
 Đổi kiểm: Đã đối chiếu chéo trên màn hình với bạn có MSSV `2A202603089`; hai con số được đối chiếu trực tiếp từ file `D13-2A202603099-bangA.csv` là giá trị `z_bottom` (`-1,755 m`) và `yaw_deg` (`270,1°`) của cuboid gần nhất (`s01f58, idx 1`), cả hai số liệu đều khớp hoàn toàn với kết quả hiển thị trên khung kiểm tra của CVAT.
 
 ## 6. Ý nghĩa của nhãn, cách dùng AI và điều còn chưa chắc
+
 - **(a) Góc nhìn từ mô hình học máy 3D:** Mô hình nhận diện 3D cần nhãn đo bằng mét trong không gian thực thay vì pixel trên ảnh phẳng vì kích thước vật thể trên ảnh 2D bị biến dạng theo phối cảnh xa gần, trong khi xe tự hành cần biết chính xác khoảng cách, kích thước vật lý và quỹ đạo thực của chướng ngại vật để lập kế hoạch tránh va chạm. Các vật thể ở xa bị thưa điểm cần quy tắc gán nhãn riêng (giữ kích thước theo chuẩn lớp vật thể thay vì co sát vài điểm lẻ) để mô hình học được hình khối đầy đủ của vật thể ngay cả khi dữ liệu đầu vào bị khuyết thông tin.
 - **(b) Khai báo sử dụng AI:**
   - Công cụ: Gemini.
-  - Câu hỏi chính: giải thích ý nghĩa hệ trục tọa độ LiDAR trong CVAT, cách khắc phục lỗi kích hoạt Tampermonkey trên Chrome và phân loại các cảnh báo trong file `tukiem.csv` để ưu tiên sửa lỗi.
-  - Cách dùng kết quả: dùng hướng dẫn thao tác để kiểm tra trực tiếp trên giao diện CVAT, đối chiếu lại từng cuboid với ảnh camera trong thư mục `work/xem/` và tự tổng hợp số liệu từ file CSV vào báo cáo.
+  - Câu hỏi chính: hỗ trợ đọc hiểu tài liệu hướng dẫn (guide) và giải đáp các vấn đề nhỏ phát sinh trong quá trình thực hiện.
+  - Cách dùng kết quả: dùng làm thông tin tham khảo để tự thao tác gán nhãn trên CVAT, kiểm tra lại dữ liệu và hoàn thiện báo cáo.
 - **(c) Điều còn chưa chắc và lỗi phát hiện sau hạn:** Một số cuboid ở rìa xa trên `38 m` có góc xoay đầu xe (`yaw`) chỉ được ước lượng dựa trên hướng làn đường do cụm điểm LiDAR quá mảnh để thấy rõ mặt trước hay mặt sau. Ngoài ra, một vài hộp bị cờ trong `tukiem.csv` như hộp bị xoay ngang trục chiều dài/chiều rộng ở frame đầu tiên và một số hộp có đáy bị lệch độ cao mặt đường ở hai frame cuối vẫn chưa kịp cập nhật lại lên server trước thời điểm đồng bộ cuối cùng.
